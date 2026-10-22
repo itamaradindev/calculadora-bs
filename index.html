@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calculadora Bs · USDT · Soles</title>
+<meta name="description" content="Convierte bolívares, USDT y soles con tasas Binance P2P">
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--text:#1d1b18;--muted:#77716a;--line:#e4dfd6;--acc:#2f6b4f;--accT:#fff;--danger:#b33}
+@media (prefers-color-scheme:dark){:root{--bg:#141412;--card:#1e1d1b;--text:#f0ede6;--muted:#9a948b;--line:#33312d;--acc:#6fbf95;--accT:#0d1a13}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}
+main{max-width:560px;margin:0 auto;padding:16px 16px 48px}
+h1{font-size:20px;margin:4px 0 16px}
+label{font-size:13px;color:var(--muted)}
+.amt{width:100%;font:500 34px ui-monospace,Menlo,monospace;padding:12px 14px;text-align:right;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);margin-top:4px}
+.seg{display:flex;background:var(--line);border-radius:10px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;color:var(--text);padding:8px 10px;border-radius:8px;font:500 14px inherit;font-family:inherit;cursor:pointer}
+.seg button[aria-selected=true]{background:var(--card);box-shadow:0 1px 2px #0002}
+.group{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:12px}
+.out{display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px;gap:8px}.out+.out{border-top:1px solid var(--line)}
+.out b{font:500 22px ui-monospace,Menlo,monospace}
+.row{display:flex;gap:8px;align-items:center;margin:12px 0;flex-wrap:wrap}.row .seg{flex:1}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:24px 0 8px;font-weight:600}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px}
+td,th{padding:6px 8px;text-align:right;font:13px ui-monospace,Menlo,monospace}th{color:var(--muted);font-family:inherit;font-weight:500}
+td:first-child{text-align:left;font-family:inherit}
+.muted{color:var(--muted);font-size:13px}.warn{color:var(--danger);font-size:13px}
+.btn{margin-left:auto;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:8px;padding:6px 12px;font:inherit;cursor:pointer}
+</style></head><body><main>
+<h1>Calculadora Bs</h1>
+<label for="amt">Monto</label>
+<input class="amt" id="amt" inputmode="decimal" placeholder="0" autocomplete="off">
+<div class="seg" role="tablist" id="curTabs" style="margin-top:8px">
+<button role="tab" data-cur="VES" aria-selected="true">Bs</button><button role="tab" data-cur="USDT" aria-selected="false">USDT</button><button role="tab" data-cur="PEN" aria-selected="false">Soles</button></div>
+<div class="group" id="outs"></div>
+<div class="row"><span class="muted">Tasa:</span><div class="seg" role="tablist" id="sideTabs">
+<button role="tab" data-side="mid" aria-selected="true">Promedio</button><button role="tab" data-side="buy" aria-selected="false">Compra</button><button role="tab" data-side="sell" aria-selected="false">Venta</button></div></div>
+<h2>Tasas Binance P2P</h2>
+<table id="rates"></table>
+<div class="row"><span class="muted" id="when">Cargando…</span><button class="btn" id="refresh">Actualizar</button></div>
+<div class="warn" id="err" hidden></div>
+<p class="muted">Compra = precio para comprar USDT; Venta = precio al vender USDT. Referencial, no es asesoría financiera.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);let R=null,cur='VES',side='mid';
+const NAMES={VES:'Bolívares',USDT:'USDT',PEN:'Soles'};
+const fmt=(v,c)=>(c==='VES'?'Bs ':c==='PEN'?'S/ ':'')+v.toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2})+(c==='USDT'?' USDT':'');
+const parse=s=>{s=(s||'').trim().replace(/\s/g,'');if(!s)return 0;if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');return parseFloat(s)||0};
+function conv(a,from,s=side){if(!R)return null;const u=from==='USDT'?a:from==='VES'?a/R.VES[s]:a/R.PEN[s];return{VES:u*R.VES[s],USDT:u,PEN:u*R.PEN[s]}}
+function render(){const a=parse($('amt').value),c=conv(a,cur);
+$('outs').innerHTML=['VES','USDT','PEN'].filter(k=>k!==cur).map(k=>`<div class="out"><span>${NAMES[k]}</span><b data-out="${k}">${c?fmt(c[k],k):'—'}</b></div>`).join('');
+if(R){const t=x=>x.toLocaleString('es-VE',{maximumFractionDigits:3}),K=['buy','sell','mid'];
+$('rates').innerHTML='<tr><th></th><th>Compra</th><th>Venta</th><th>Prom.</th></tr>'+
+`<tr><td>Bs por USDT</td>${K.map(k=>`<td>${t(R.VES[k])}</td>`).join('')}</tr>`+
+`<tr><td>S/ por USDT</td>${K.map(k=>`<td>${t(R.PEN[k])}</td>`).join('')}</tr>`+
+`<tr><td>Bs por sol</td>${K.map(k=>`<td>${t(R.VES[k]/R.PEN[k])}</td>`).join('')}</tr>`;
+$('when').textContent='Actualizado '+new Date(R.fetched_at*1000).toLocaleString('es-VE',{dateStyle:'short',timeStyle:'short'});}}
+function tabs(id,attr,cb){const bs=[...$(id).querySelectorAll('button')];bs.forEach(b=>b.onclick=()=>{bs.forEach(x=>x.setAttribute('aria-selected',String(x===b)));cb(b.dataset[attr])})}
+tabs('curTabs','cur',v=>{const a=parse($('amt').value),c=conv(a,cur);if(c&&a)$('amt').value=(+c[v].toFixed(2)).toString().replace('.',',');cur=v;render()});
+tabs('sideTabs','side',v=>{side=v;render()});$('amt').oninput=render;
+async function live(f){const j=await (await fetch(`https://criptoya.com/api/binancep2p/USDT/${f}/1`,{cache:'no-store'})).json();
+if(!(j.ask>0&&j.bid>0))throw 0;return{buy:j.ask,sell:j.bid,mid:(j.ask+j.bid)/2,t:j.time}}
+async function load(){$('when').textContent='Actualizando…';$('err').hidden=true;
+try{const[v,p]=await Promise.all([live('VES'),live('PEN')]);R={VES:v,PEN:p,fetched_at:Math.min(v.t,p.t)||Date.now()/1000}}
+catch(e){try{R=await (await fetch('rates.json?'+Date.now())).json();$('err').hidden=false;$('err').textContent='Sin conexión a la tasa en vivo; mostrando la última guardada.'}
+catch(e2){$('err').hidden=false;$('err').textContent='No se pudieron obtener las tasas.'}}render()}
+$('refresh').onclick=load;render();load();setInterval(load,5*60*1000);
+</script></body></html>
