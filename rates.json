@@ -1,0 +1,14 @@
+{
+ "VES": {
+  "buy": 1004.799,
+  "sell": 1003,
+  "mid": 1003.8995
+ },
+ "PEN": {
+  "buy": 3.45,
+  "sell": 3.436,
+  "mid": 3.443
+ },
+ "fetched_at": 1792639711,
+ "source": "Binance P2P via criptoya.com"
+}
