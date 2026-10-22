@@ -17,15 +17,16 @@ input{background:none;border:0;outline:0;color:#eaecef;font-size:34px;width:100%
 .side button[aria-selected=true]{color:#eaecef;border-color:#f0b90b}
 table{width:100%;border-collapse:collapse;font-size:12px}th{color:#848e9c;font-weight:500;text-align:right;padding:5px 0}th:first-child,td:first-child{text-align:left}
 td{padding:6px 0;text-align:right;font-family:"JetBrains Mono",ui-monospace,monospace}td.g{color:#0ecb81}td.r{color:#f6465d}td:first-child{font-family:Inter,sans-serif;color:#848e9c}
-.muted{color:#5e6673;font-size:11px;line-height:1.5}.err{color:#f6465d;font-size:12px}
+.share{width:100%;background:#f0b90b;color:#0b0e11;border:0;border-radius:6px;padding:12px;font-size:15px;font-weight:700;margin-bottom:10px}#wa{display:block;text-align:center;color:#0ecb81;font-size:13px;margin-bottom:10px}.muted{color:#5e6673;font-size:11px;line-height:1.5}.err{color:#f6465d;font-size:12px}
 </style></head><body>
 <div class="tick" id="tick"><span>Cargando tasas…</span></div>
 <main>
-<div class="top"><h1>Calculadora <em>Bs</em></h1><button id="refresh">⟳ REFRESH</button></div>
+<div class="top"><h1>Calculadora <em>Bs</em></h1><button id="refresh">⟳ Actualizar</button></div>
 <div class="card"><div class="row"><span class="lbl">Monto</span><div class="seg" id="curTabs"><button data-cur="VES" aria-selected="true">VES</button><button data-cur="USDT" aria-selected="false">USDT</button><button data-cur="PEN" aria-selected="false">PEN</button></div></div>
 <input id="amt" inputmode="decimal" placeholder="0,00"></div>
 <div class="side" id="sideTabs"><button data-side="mid" aria-selected="true">Promedio</button><button data-side="buy" aria-selected="false">Compra</button><button data-side="sell" aria-selected="false">Venta</button></div>
 <div class="card" id="outs"></div>
+<button class="share" id="share">Compartir</button><a id="wa" target="_blank" rel="noopener" hidden>Enviar texto por WhatsApp</a>
 <div class="card"><table id="rates"></table></div>
 <p class="err" id="err" hidden></p>
 <p class="muted"><span id="when"></span> · Binance P2P vía CriptoYa · Compra = precio para comprar USDT (ask), Venta = al vender (bid). Referencial.</p>
@@ -52,4 +53,27 @@ $('rates').innerHTML='<tr><th>Par</th><th>Compra</th><th>Venta</th><th>Prom.</th
 $('when').textContent='Actualizado '+when()}$('err').hidden=!err;$('err').textContent=err}
 seg('curTabs','cur',v=>switchCur(v,()=>$('amt').value,x=>$('amt').value=x));seg('sideTabs','side',v=>{side=v;render()});
 $('amt').oninput=render;$('refresh').onclick=load;render();load();
+
+const URL_P='https://itamaradindev.github.io/calculadora-bs/';
+function drawShare(){const W=1080,H=1080,cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+const M='"JetBrains Mono","SF Mono",ui-monospace,Menlo,monospace',S='Inter,system-ui,sans-serif';
+g.fillStyle='#0b0e11';g.fillRect(0,0,W,H);g.fillStyle='#f0b90b';g.fillRect(0,0,W,12);
+g.font='700 64px '+S;g.fillStyle='#eaecef';g.fillText('Calculadora ',70,130);g.fillStyle='#f0b90b';g.fillText('Bs',70+g.measureText('Calculadora ').width,130);
+const sl={mid:'Promedio',buy:'Compra',sell:'Venta'}[side];g.font='500 30px '+S;g.fillStyle='#848e9c';g.fillText('Binance P2P · tasa '+sl,70,180);
+const a=parse($('amt').value),c=conv(a,cur);
+const box=(y,h)=>{g.fillStyle='#181a20';g.strokeStyle='#2b3139';g.lineWidth=2;g.beginPath();g.roundRect(70,y,W-140,h,18);g.fill();g.stroke()};
+box(220,400);g.font='500 30px '+S;g.fillStyle='#848e9c';g.fillText('Monto',110,280);
+g.font='700 68px '+M;g.fillStyle='#eaecef';g.fillText(a?fmt(a,cur):'—',110,365);
+let y=455;['VES','USDT','PEN'].filter(k=>k!==cur).forEach(k=>{g.strokeStyle='#2b3139';g.beginPath();g.moveTo(110,y-55);g.lineTo(W-110,y-55);g.stroke();
+g.font='500 30px '+S;g.fillStyle='#848e9c';g.fillText(k+' · '+NAMES[k],110,y+10);g.font='700 46px '+M;g.fillStyle='#f0b90b';g.textAlign='right';g.fillText(c&&a?num(c[k]):'—',W-110,y+12);g.textAlign='left';y+=95});
+box(650,250);const t=x=>num(x,3);y=715;
+(R?[['USDT/VES',R.VES[side]],['USDT/PEN',R.PEN[side]],['PEN/VES',R.VES[side]/R.PEN[side]]]:[]).forEach(([l,v])=>{g.font='500 34px '+S;g.fillStyle='#848e9c';g.fillText(l,110,y);g.font='700 40px '+M;g.fillStyle='#0ecb81';g.textAlign='right';g.fillText(t(v),W-110,y);g.textAlign='left';y+=72});
+g.font='500 28px '+S;g.fillStyle='#848e9c';g.fillText(R?'Actualizado '+when():'',70,965);g.font='600 30px '+M;g.fillStyle='#f0b90b';g.fillText(URL_P.replace('https://',''),70,1020);
+return cv}
+function shareText(){const a=parse($('amt').value),c=conv(a,cur);let s='Calculadora Bs\n';if(c&&a)s+=fmt(a,cur)+' = '+['VES','USDT','PEN'].filter(k=>k!==cur).map(k=>fmt(c[k],k)).join(' = ')+'\n';
+if(R)s+=`USDT/VES ${num(R.VES[side],3)} · USDT/PEN ${num(R.PEN[side],3)} · PEN/VES ${num(R.VES[side]/R.PEN[side],3)}\n${when()}\n`;return s+URL_P}
+$('share').onclick=async()=>{const cv=drawShare(),blob=await new Promise(r=>cv.toBlob(r,'image/png')),f=new File([blob],'calculadora-bs.png',{type:'image/png'});
+try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text:shareText()});return}}catch(e){if(e.name==='AbortError')return}
+const u=URL.createObjectURL(blob),l=document.createElement('a');l.href=u;l.download='calculadora-bs.png';document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);
+const w=$('wa');w.href='https://wa.me/?text='+encodeURIComponent(shareText());w.hidden=false};
 </script></body></html>
